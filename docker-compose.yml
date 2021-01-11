@@ -1,0 +1,71 @@
+version: '3'
+services:
+  nginx:
+    hostname: nginx
+    container_name: nginx
+    image: nginx:1.19.2-alpine
+    restart: always
+    ports:
+      - 80:80
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./nginx:/etc/nginx
+      - ../www:/www
+      - ./logs:/var/log/nginx
+    networks:
+      - local_net
+  php:
+    hostname: php74-fpm
+    container_name: php74-fpm-alpine
+    image: b588e1aad42f
+    restart: always
+    ports:
+      - 9000:9000
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../www:/www
+      - ./logs:/var/log/php
+    stdin_open: true
+    tty: true
+    networks:
+      - local_net
+  mysql:
+    hostname: mysql57
+    container_name: mysql57
+    image: mysql:5.7
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=12345678
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql:/etc/mysql
+      - ./logs:/data/mysql/logs
+    networks:
+      - local_net
+  redis:
+    hostname: redis-master
+    container_name: redis-master
+    image: redis:5-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/conf/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/data:/data
+    command:
+      redis-server /usr/local/etc/redis/redis.conf --requirepass 12345678
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - local_net
+networks:
+  local_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/16
