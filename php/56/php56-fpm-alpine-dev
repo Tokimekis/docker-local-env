@@ -1,0 +1,41 @@
+FROM php:5.6-fpm-alpine
+MAINTAINER "tokimekis@vip.qq.com"
+
+# 设置镜像源
+RUN echo "#aliyun" > /etc/apk/repositories
+RUN echo "https://mirrors.aliyun.com/alpine/v3.12/main/" >> /etc/apk/repositories
+RUN echo "https://mirrors.aliyun.com/alpine/v3.12/community/" >> /etc/apk/repositories
+# 设置时区
+RUN echo "Asia/Shanghai" > /etc/timezone
+# 开发环境用配置文件
+RUN mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
+# 安装相应依赖
+RUN set -ex
+RUN apk add --no-cache --virtual .phpize-deps $PHPIZE_DEPS \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libwebp-dev \
+        libxpm \
+        libmcrypt-dev
+# pecl方式安装redis和mcrypt
+RUN pecl install redis-3.1.3 \
+    && docker-php-ext-enable redis
+RUN pecl install xdebug-2.5.5 \
+    && docker-php-ext-enable xdebug
+# docker环境php依赖相关命令
+RUN docker-php-ext-install mcrypt gd bcmath pdo_mysql mysqli opcache \
+    && docker-php-source delete
+# 从指定docker镜像拷贝composer
+COPY --from=composer:1.10 /usr/bin/composer /usr/bin/composer
+# 清除pecl安装缓存
+RUN pecl clear-cache
+# 写入xdebug默认配置
+RUN echo "xdebug.remote_enable = 1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.remote_host = host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.remote_port = 9005" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.remote_log = /var/log/xdebug/xdebug.log" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+# 设置工作目录
+WORKDIR /www
+# 开放9000端口
+EXPOSE 9000
