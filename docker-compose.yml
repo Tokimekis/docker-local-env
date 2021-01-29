@@ -15,6 +15,42 @@ services:
       - ./logs:/var/log/nginx
     networks:
       - local_net
+  php73-fpm:
+    hostname: php73-fpm
+    container_name: php73-fpm-alpine
+    image: 4c14ab999fcb
+    restart: always
+    ports:
+      - 9001:9000
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../www:/www
+      - ./logs/php73:/var/log/php
+    links: 
+      - mysql
+    stdin_open: true
+    tty: true
+    networks:
+      - local_net
+  php56-fpm:
+    hostname: php56-fpm
+    container_name: php56-fpm-alpine
+    image: f81e185b60ce
+    restart: always
+    ports:
+      - 9002:9000
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../www:/www
+      - ./logs/php56:/var/log/php
+    links: 
+      - mysql
+    stdin_open: true
+    tty: true
+    networks:
+      - local_net
   php:
     hostname: php74-fpm
     container_name: php74-fpm-alpine
@@ -27,6 +63,8 @@ services:
     volumes:
       - ../www:/www
       - ./logs:/var/log/php
+    links: 
+      - mysql
     stdin_open: true
     tty: true
     networks:
